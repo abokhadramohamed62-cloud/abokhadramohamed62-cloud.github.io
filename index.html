@@ -100,6 +100,10 @@
                     document.getElementById('btn').style.display = 'none';
                     document.getElementById('error').style.display = 'none';
                     setTimeout(() => window.Telegram?.WebApp?.close(), 2000);
+                } else if (data.reason === 'ip_exists') {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerText = '🚫 تم رفض التسجيل، هذا الجهاز مسجل مسبقاً';
+                    document.getElementById('btn').style.display = 'none';
                 } else {
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('error').innerText = '❌ فشل التحقق، حاول مرة أخرى';
