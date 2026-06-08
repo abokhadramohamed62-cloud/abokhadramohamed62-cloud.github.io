@@ -42,7 +42,7 @@
             margin-top: 10px;
         }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .success { color: #4CAF50; font-size: 18px; display: none; }
+        .success { color: #4CAF50; font-size: 18px; display: none; margin-top: 10px; }
         .error { color: #f44336; font-size: 14px; display: none; margin-top: 10px; }
     </style>
 </head>
@@ -51,7 +51,6 @@
         <div class="shield">🛡️</div>
         <h1>التحقق الأمني</h1>
         <p>أكد أنك شخص حقيقي للمتابعة</p>
-
         <div class="turnstile-container">
             <div class="cf-turnstile"
                  data-sitekey="0x4AAAAAADg_QzpMFMb68n4OPqIkwhs1gEI"
@@ -59,19 +58,17 @@
                  data-error-callback="onError">
             </div>
         </div>
-
         <div class="success" id="success">✅ تم التحقق بنجاح! يمكنك العودة للبوت</div>
         <div class="error" id="error">❌ فشل التحقق، حاول مرة أخرى</div>
-
         <button class="btn" id="btn" onclick="verify()" disabled>التحقق</button>
     </div>
-
     <script>
         let token = null;
 
         function onSuccess(t) {
             token = t;
             document.getElementById('btn').disabled = false;
+            document.getElementById('error').style.display = 'none';
         }
 
         function onError() {
@@ -80,19 +77,36 @@
 
         async function verify() {
             if (!token) return;
-            const tgData = window.Telegram?.WebApp?.initData || '';
-            const response = await fetch('https://verify-bot.YOUR_RAILWAY_APP.railway.app/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, tgData })
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('success').style.display = 'block';
-                document.getElementById('btn').style.display = 'none';
-                setTimeout(() => window.Telegram?.WebApp?.close(), 2000);
-            } else {
+
+            const user_id = new URLSearchParams(window.location.search).get('user_id');
+
+            if (!user_id) {
                 document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerText = '❌ لم يتم العثور على معرف المستخدم';
+                return;
+            }
+
+            try {
+                const response = await fetch('https://worker-production-aa43.up.railway.app/verify-cf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, user_id })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('success').style.display = 'block';
+                    document.getElementById('btn').style.display = 'none';
+                    document.getElementById('error').style.display = 'none';
+                    setTimeout(() => window.Telegram?.WebApp?.close(), 2000);
+                } else {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerText = '❌ فشل التحقق، حاول مرة أخرى';
+                }
+            } catch (err) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerText = '❌ خطأ في الاتصال، حاول مرة أخرى';
             }
         }
     </script>
