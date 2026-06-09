@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>التحقق الأمني</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,12 +58,19 @@
                  data-error-callback="onError">
             </div>
         </div>
-        <div class="success" id="success">✅ تم التحقق بنجاح! سيتم إرسال رسالة للبوت تلقائياً</div>
+        <div class="success" id="success">✅ تم التحقق بنجاح! يمكنك العودة للبوت</div>
         <div class="error" id="error">❌ فشل التحقق، حاول مرة أخرى</div>
         <button class="btn" id="btn" onclick="verify()" disabled>التحقق</button>
     </div>
 
     <script>
+        window.addEventListener('load', function() {
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+            }
+        });
+
         let token = null;
 
         function onSuccess(t) {
@@ -111,7 +119,7 @@
                     }, 3000);
                 } else if (data.reason === 'ip_exists') {
                     document.getElementById('error').style.display = 'block';
-                    document.getElementById('error').innerText = '🚫 تم رفض التسجيل، هذا الجهاز مسجل مسبقاً';
+                    document.getElementById('error').innerText = '🚫 هذا الجهاز مسجل مسبقاً';
                     document.getElementById('btn').style.display = 'none';
                 } else if (data.reason === 'self_referral') {
                     document.getElementById('error').style.display = 'block';
