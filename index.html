@@ -8,7 +8,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0f0c29;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             display: flex;
@@ -53,7 +52,7 @@
         <p>أكد أنك شخص حقيقي للمتابعة</p>
         <div class="turnstile-container">
             <div class="cf-turnstile"
-                 data-sitekey="0x4AAAAAADg_QwNGvi2wp0eo"
+                 data-sitekey="0x4AAAAAADg_QzpMFMb68n4OPqIkwhs1gEI"
                  data-callback="onSuccess"
                  data-error-callback="onError">
             </div>
@@ -62,6 +61,7 @@
         <div class="error" id="error">❌ فشل التحقق، حاول مرة أخرى</div>
         <button class="btn" id="btn" onclick="verify()" disabled>التحقق</button>
     </div>
+
     <script>
         let token = null;
 
@@ -73,12 +73,16 @@
 
         function onError() {
             document.getElementById('error').style.display = 'block';
+            document.getElementById('error').innerText = '❌ فشل التحقق، حاول مرة أخرى';
         }
 
         async function verify() {
             if (!token) return;
 
-            const user_id = new URLSearchParams(window.location.search).get('user_id');
+            const params = new URLSearchParams(window.location.search);
+            const user_id = params.get('user_id');
+            const referred_by = params.get('referred_by');
+
             if (!user_id) {
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').innerText = '❌ لم يتم العثور على معرف المستخدم';
@@ -92,7 +96,7 @@
                 const response = await fetch('https://worker-production-aa43.up.railway.app/verify-cf', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token, user_id })
+                    body: JSON.stringify({ token, user_id, referred_by })
                 });
                 const data = await response.json();
 
@@ -100,7 +104,6 @@
                     document.getElementById('success').style.display = 'block';
                     document.getElementById('btn').style.display = 'none';
                     document.getElementById('error').style.display = 'none';
-                    // أغلق الـ WebApp بعد 3 ثواني عشان البوت يبعت الرسالة
                     setTimeout(() => {
                         if (window.Telegram?.WebApp) {
                             window.Telegram.WebApp.close();
@@ -110,6 +113,11 @@
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('error').innerText = '🚫 تم رفض التسجيل، هذا الجهاز مسجل مسبقاً';
                     document.getElementById('btn').style.display = 'none';
+                } else if (data.reason === 'self_referral') {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerText = '❌ لا يمكنك استخدام رابط إحالتك الخاص';
+                    document.getElementById('btn').disabled = false;
+                    document.getElementById('btn').innerText = 'التحقق';
                 } else {
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('error').innerText = '❌ فشل التحقق، حاول مرة أخرى';
