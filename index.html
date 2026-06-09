@@ -58,7 +58,7 @@
                  data-error-callback="onError">
             </div>
         </div>
-        <div class="success" id="success">✅ تم التحقق بنجاح! يمكنك العودة للبوت</div>
+        <div class="success" id="success">✅ تم التحقق بنجاح! سيتم إرسال رسالة للبوت تلقائياً</div>
         <div class="error" id="error">❌ فشل التحقق، حاول مرة أخرى</div>
         <button class="btn" id="btn" onclick="verify()" disabled>التحقق</button>
     </div>
@@ -79,12 +79,14 @@
             if (!token) return;
 
             const user_id = new URLSearchParams(window.location.search).get('user_id');
-
             if (!user_id) {
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').innerText = '❌ لم يتم العثور على معرف المستخدم';
                 return;
             }
+
+            document.getElementById('btn').disabled = true;
+            document.getElementById('btn').innerText = 'جاري التحقق...';
 
             try {
                 const response = await fetch('https://worker-production-aa43.up.railway.app/verify-cf', {
@@ -92,14 +94,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token, user_id })
                 });
-
                 const data = await response.json();
 
                 if (data.success) {
                     document.getElementById('success').style.display = 'block';
                     document.getElementById('btn').style.display = 'none';
                     document.getElementById('error').style.display = 'none';
-                    setTimeout(() => window.Telegram?.WebApp?.close(), 2000);
+                    // أغلق الـ WebApp بعد 3 ثواني عشان البوت يبعت الرسالة
+                    setTimeout(() => {
+                        if (window.Telegram?.WebApp) {
+                            window.Telegram.WebApp.close();
+                        }
+                    }, 3000);
                 } else if (data.reason === 'ip_exists') {
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('error').innerText = '🚫 تم رفض التسجيل، هذا الجهاز مسجل مسبقاً';
@@ -107,10 +113,14 @@
                 } else {
                     document.getElementById('error').style.display = 'block';
                     document.getElementById('error').innerText = '❌ فشل التحقق، حاول مرة أخرى';
+                    document.getElementById('btn').disabled = false;
+                    document.getElementById('btn').innerText = 'التحقق';
                 }
             } catch (err) {
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').innerText = '❌ خطأ في الاتصال، حاول مرة أخرى';
+                document.getElementById('btn').disabled = false;
+                document.getElementById('btn').innerText = 'التحقق';
             }
         }
     </script>
